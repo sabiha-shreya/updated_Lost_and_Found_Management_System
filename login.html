@@ -17,6 +17,8 @@
 
         <h1>Login</h1>
 
+        <div id="login-error" style="display:none; color: #b91c1c; background-color: #fef2f2; border: 1px solid #f87171; border-radius: 6px; padding: 10px; margin-bottom: 15px; font-size: 14px; font-weight: 500; text-align: center;"></div>
+
         <form action="login.php" method="POST" autocomplete="on">
 
             <input
@@ -49,6 +51,17 @@
 
     </div>
 
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const err = params.get('error');
+        if (err) {
+            const el = document.getElementById('login-error');
+            if (el) {
+                el.textContent = err;
+                el.style.display = 'block';
+            }
+        }
+    </script>
 </body>
 
 </html>

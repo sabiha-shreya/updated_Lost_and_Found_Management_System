@@ -43,6 +43,7 @@ const { renderReturnedItemsView } = require('../views/returnedItemsView');
 const { renderAdminApprovedClaimsView } = require('../views/adminApprovedClaimsView');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middleware: Normalize URL for Vercel Serverless Function rewrites
 app.use((req, res, next) => {
@@ -81,7 +82,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use(cookieSession({
   name: 'campus_lafms_session',
   keys: [process.env.SESSION_SECRET || 'lafms_super_secure_serverless_session_key_2026'],
-  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  sameSite: 'lax',
+  httpOnly: true
 }));
 
 // Configure file uploads via multer using memoryStorage (100% serverless Vercel read-only filesystem compatible)
@@ -238,7 +241,11 @@ app.get(['/', '/index.html'], (req, res) => {
 
 // Helper for sending PHP-style script alerts
 function sendAlertRedirect(res, message, redirectUrl) {
-  res.send(`<script>alert(${JSON.stringify(message)}); window.location.href=${JSON.stringify(redirectUrl)};</script>`);
+  let targetUrl = redirectUrl;
+  if (redirectUrl.includes('login.html') && !redirectUrl.includes('error=')) {
+    targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'error=' + encodeURIComponent(message);
+  }
+  res.send(`<script>alert(${JSON.stringify(message)}); window.location.href=${JSON.stringify(targetUrl)};</script>`);
 }
 
 /* =========================================================
@@ -256,7 +263,7 @@ app.post(['/login.php', '/login'], async (req, res) => {
 
   try {
     const users = await query(
-      'SELECT user_id, full_name, student_id, email, department, password, role FROM users WHERE student_id = ? OR email = ? LIMIT 1',
+      'SELECT user_id, full_name, student_id, email, department, password, role FROM users WHERE LOWER(student_id) = LOWER(?) OR LOWER(email) = LOWER(?) LIMIT 1',
       [email_or_id, email_or_id]
     );
 
@@ -346,7 +353,7 @@ app.post(['/admin-login.php', '/admin-login'], async (req, res) => {
   }
 
   try {
-    const admins = await query('SELECT * FROM admins WHERE username = ? LIMIT 1', [username]);
+    const admins = await query('SELECT * FROM admins WHERE LOWER(username) = LOWER(?) LIMIT 1', [username]);
 
     if (admins.length === 1 && verifyPassword(password, admins[0].password)) {
       req.session.admin_id = admins[0].admin_id;
