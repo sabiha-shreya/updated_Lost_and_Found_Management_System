@@ -2,7 +2,9 @@ const { escapeHtml } = require('../lib/auth');
 const { renderUserLayout, renderAdminLayout } = require('./layoutView');
 
 function renderApprovedClaimDetails({ match, match_id, is_admin = false, is_owner = false, is_finder = false, full_name = 'Student', unread_count = 0, admin_username = 'Admin' }) {
-  const lostImage = match.lost_item_image ? escapeHtml(match.lost_item_image) : '';
+  const lostImage = (match.lost_item_image && match.lost_item_image.startsWith('data:'))
+    ? `image.php?type=lost&id=${encodeURIComponent(match.lost_id)}`
+    : (match.lost_item_image ? escapeHtml(match.lost_item_image) : '');
   const backLink = is_admin ? 'admin-dashboard.php' : 'notifications.php';
 
   const content = `

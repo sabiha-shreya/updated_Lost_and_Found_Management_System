@@ -88,22 +88,21 @@ function renderMyMatches({ matches = [], user_id, full_name = 'Student', unread_
       if (claimStatus === 'Not Claimed') {
         actionHtml = `
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl font-medium">○ No Claim Request Yet</span>
-            <a href="view-claim.php?match_id=${matchId}" class="bg-[#003844] hover:bg-[#0fa4af] text-white px-4 py-2 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5">
-              <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
-              <span>View Claimer Data & Secret Info</span>
-            </a>
+            <span class="inline-flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl font-medium">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Waiting for owner to send claim request</span>
+            </span>
           </div>`;
       } else if (claimStatus === 'Pending') {
         actionHtml = `
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
-              <i data-lucide="bell-ring" class="w-3.5 h-3.5 text-amber-500"></i>
+            <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-300 px-3.5 py-1.5 rounded-xl animate-pulse">
+              <i data-lucide="bell" class="w-3.5 h-3.5 text-amber-600"></i>
               <span>Claim Request Received!</span>
             </span>
-            <a href="view-claim.php?match_id=${matchId}" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm inline-flex items-center gap-1.5">
-              <i data-lucide="search" class="w-3.5 h-3.5"></i>
-              <span>Review Claim & Secret Info</span>
+            <a href="view-claim.php?match_id=${matchId}" class="bg-[#003844] hover:bg-[#0fa4af] text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm inline-flex items-center gap-1.5">
+              <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+              <span>Review Claimer & Secret Info</span>
             </a>
           </div>`;
       } else if (claimStatus === 'Rejected') {

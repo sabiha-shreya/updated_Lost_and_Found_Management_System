@@ -1213,6 +1213,9 @@ app.get(['/approved-claim-details.php', '/approved-claim-details'], async (req, 
     }
 
     const match = matches[0];
+    if (match.claim_status !== 'Approved') {
+      return res.redirect('/my-matches.php');
+    }
     const is_admin = !!req.session?.admin_username;
     const is_owner = req.session?.user_id === match.lost_user_id;
     const is_finder = req.session?.user_id === match.found_user_id;

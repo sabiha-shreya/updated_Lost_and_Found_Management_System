@@ -6,9 +6,39 @@ function renderViewClaim({ match, claim, match_id, currentUserId, full_name = 'S
   const id = match_id || m.match_id;
   const lostImage = m.lost_item_image ? escapeHtml(m.lost_item_image) : '';
   const foundImage = m.found_item_image || m.found_image ? escapeHtml(m.found_item_image || m.found_image) : '';
-  const claimStatus = m.claim_status || 'Pending';
+  const claimStatus = m.claim_status || 'Not Claimed';
   const percentage = parseFloat(m.match_percentage || 0).toFixed(2);
   const secretInfo = m.lost_secret_information || m.secret_information || '';
+
+  if (claimStatus === 'Not Claimed') {
+    const content = `
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-8 sm:p-12 text-center max-w-xl mx-auto my-8">
+        <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="clock" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-xl font-extrabold text-slate-900 tracking-tight">No Claim Request Sent Yet</h3>
+        <p class="text-sm text-slate-500 mt-2 leading-relaxed">
+          The owner of the matching lost item has not submitted a claim request for this item yet.
+        </p>
+        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+          Once the owner clicks <b>"Send Claim Request"</b> on their matches page, their claimer profile and secret verification details will appear here for you to verify and approve.
+        </p>
+        <div class="mt-6">
+          <a href="my-matches.php" class="bg-[#003844] hover:bg-[#0fa4af] text-white px-5 py-2.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Back to My Matches</span>
+          </a>
+        </div>
+      </div>
+    `;
+    return renderUserLayout({
+      title: 'Claim Review',
+      activeNav: 'matches',
+      full_name,
+      unread_count,
+      content
+    });
+  }
 
   const content = `
     <!-- HEADER -->
