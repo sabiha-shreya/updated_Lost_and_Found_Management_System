@@ -13,9 +13,13 @@ function renderItemDetails({ item, type, from, full_name = 'Student', unread_cou
   const backHref = from === 'items' ? 'view-items.php' : 'dashboard.php';
   const backText = from === 'items' ? 'Back to Items' : 'Back to Dashboard';
 
-  const imageHtml = (item.item_image)
+  const imgSrc = (item.item_image && item.item_image.startsWith('data:'))
+    ? `image.php?type=${encodeURIComponent(type)}&id=${encodeURIComponent(isLost ? item.lost_id : item.found_id)}`
+    : (item.item_image ? escapeHtml(item.item_image) : '');
+
+  const imageHtml = imgSrc
     ? `<div class="w-full max-w-sm mx-auto h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-xs cursor-pointer hover:shadow-md transition" onclick="showImage(this.querySelector('img').src)">
-         <img src="${escapeHtml(item.item_image)}" class="w-full h-full object-cover" alt="${escapeHtml(item.item_name)}">
+         <img src="${imgSrc}" class="w-full h-full object-cover" alt="${escapeHtml(item.item_name)}">
        </div>`
     : `<div class="w-full max-w-sm mx-auto h-44 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50">
          <i data-lucide="image-off" class="w-8 h-8 mb-2 text-slate-300"></i>

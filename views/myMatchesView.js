@@ -16,9 +16,12 @@ function renderMyMatches({ matches = [], user_id, full_name = 'Student', unread_
     const finderStatus = (row.finder_status || '').trim().toLowerCase();
 
     // Image for lost item
-    const lostImageHtml = row.lost_item_image
+    const lostImgSrc = row.lost_item_image
+      ? (row.lost_item_image.startsWith('data:') ? `image.php?type=lost&id=${encodeURIComponent(row.lost_id)}` : escapeHtml(row.lost_item_image))
+      : null;
+    const lostImageHtml = lostImgSrc
       ? `<div class="w-full h-40 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 mb-3.5">
-           <img src="${escapeHtml(row.lost_item_image)}" alt="Lost Item" class="w-full h-full object-cover">
+           <img src="${lostImgSrc}" alt="Lost Item" class="w-full h-full object-cover">
          </div>`
       : '';
 

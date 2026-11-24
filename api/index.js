@@ -148,6 +148,53 @@ app.get(['/dashboard.css', '/css/dashboard.css'], (req, res) => {
   res.status(404).send('');
 });
 
+// Image streaming endpoint (prevents HTML payload explosion for base64 images)
+app.get(['/image.php', '/image', '/item-image'], async (req, res) => {
+  const { type, id } = req.query;
+  const itemId = parseInt(id, 10);
+  if (!itemId || (type !== 'lost' && type !== 'found')) {
+    return res.status(404).send('Not found');
+  }
+
+  try {
+    const table = type === 'lost' ? 'lost_items' : 'found_items';
+    const idCol = type === 'lost' ? 'lost_id' : 'found_id';
+    const rows = await query(`SELECT item_image FROM ${table} WHERE ${idCol} = ? LIMIT 1`, [itemId]);
+    if (!rows || rows.length === 0 || !rows[0].item_image) {
+      return res.status(404).send('No image');
+    }
+
+    const img = rows[0].item_image;
+    if (img.startsWith('data:')) {
+      const matches = img.match(/^data:([^;]+);base64,(.+)$/s);
+      if (matches) {
+        const contentType = matches[1];
+        const buffer = Buffer.from(matches[2], 'base64');
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+        return res.send(buffer);
+      }
+    }
+
+    // Static upload file fallback
+    const cleanPath = img.replace(/^\/+/, '');
+    const possiblePaths = [
+      path.join(__dirname, '..', cleanPath),
+      path.join(__dirname, '../public', cleanPath)
+    ];
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        return res.sendFile(p);
+      }
+    }
+
+    return res.redirect('/' + cleanPath);
+  } catch (err) {
+    console.error('Image route error:', err);
+    return res.status(500).send('Error loading image');
+  }
+});
+
 // Static HTML file routes
 app.get(['/login.html', '/login.php', '/login'], (req, res) => {
   if (req.session && req.session.user_id) {
@@ -371,7 +418,8 @@ app.get(['/dashboard.php', '/dashboard'], requireUser, async (req, res) => {
 
     // Approved lost items for dashboard
     const lost_items = await query(`
-      SELECT lost_id, item_name, category, lost_location, lost_date, status, item_image
+      SELECT lost_id, item_name, category, lost_location, lost_date, status, 
+             (CASE WHEN LENGTH(item_image) > 255 THEN 'data:image' ELSE item_image END) AS item_image
       FROM lost_items
       WHERE status = 'Approved'
       ORDER BY lost_date DESC, lost_id DESC
@@ -380,7 +428,8 @@ app.get(['/dashboard.php', '/dashboard'], requireUser, async (req, res) => {
 
     // Approved found items for dashboard
     const found_items = await query(`
-      SELECT found_id, item_name, category, found_location, found_date, status, item_image
+      SELECT found_id, item_name, category, found_location, found_date, status, 
+             (CASE WHEN LENGTH(item_image) > 255 THEN 'data:image' ELSE item_image END) AS item_image
       FROM found_items
       WHERE status = 'Approved'
       ORDER BY found_date DESC, found_id DESC
@@ -391,11 +440,13 @@ app.get(['/dashboard.php', '/dashboard'], requireUser, async (req, res) => {
     const recent_all_items = await query(`
       SELECT *
       FROM (
-        SELECT 'lost' AS item_type, lost_id AS id, item_name, category, lost_location AS location, lost_date AS post_date, item_image
+        SELECT 'lost' AS item_type, lost_id AS id, item_name, category, lost_location AS location, lost_date AS post_date, 
+               (CASE WHEN LENGTH(item_image) > 255 THEN 'data:image' ELSE item_image END) AS item_image
         FROM lost_items
         WHERE status = 'Approved'
         UNION ALL
-        SELECT 'found' AS item_type, found_id AS id, item_name, category, found_location AS location, found_date AS post_date, item_image
+        SELECT 'found' AS item_type, found_id AS id, item_name, category, found_location AS location, found_date AS post_date, 
+               (CASE WHEN LENGTH(item_image) > 255 THEN 'data:image' ELSE item_image END) AS item_image
         FROM found_items
         WHERE status = 'Approved'
       ) AS recent_posts
@@ -547,13 +598,15 @@ app.get(['/view-items.php', '/view-items'], async (req, res) => {
   try {
     const [lost_items, found_items] = await Promise.all([
       query(`
-        SELECT lost_id, item_name, category, description, lost_date, lost_location, contact_information, item_image, status
+        SELECT lost_id, item_name, category, description, lost_date, lost_location, contact_information, 
+               (CASE WHEN LENGTH(item_image) > 255 THEN 'data:image' ELSE item_image END) AS item_image, status
         FROM lost_items
         WHERE status = 'Approved'
         ORDER BY lost_id DESC
       `),
       query(`
-        SELECT found_id, item_name, category, description, found_date, found_location, finder_contact_information, item_image, status
+        SELECT found_id, item_name, category, description, found_date, found_location, finder_contact_information, 
+               (CASE WHEN LENGTH(item_image) > 255 THEN 'data:image' ELSE item_image END) AS item_image, status
         FROM found_items
         WHERE status = 'Approved'
         ORDER BY found_id DESC
@@ -658,8 +711,8 @@ app.all(['/search-item.php', '/search-item'], async (req, res) => {
 // Helper function: run matching logic for active user items against approved items
 async function runActiveUserMatching(userId) {
   try {
-    const userLost = await query("SELECT * FROM lost_items WHERE user_id = ? AND status IN ('Approved', 'Pending')", [userId]);
-    const approvedFound = await query("SELECT * FROM found_items WHERE status = 'Approved'");
+    const userLost = await query("SELECT lost_id, user_id, item_name, description, category, lost_location, lost_date FROM lost_items WHERE user_id = ? AND status IN ('Approved', 'Pending')", [userId]);
+    const approvedFound = await query("SELECT found_id, user_id, item_name, description, category, found_location, found_date FROM found_items WHERE status = 'Approved'");
 
     for (const lost of userLost) {
       for (const found of approvedFound) {
@@ -687,8 +740,8 @@ async function runActiveUserMatching(userId) {
       }
     }
 
-    const userFound = await query("SELECT * FROM found_items WHERE user_id = ? AND status IN ('Approved', 'Pending')", [userId]);
-    const approvedLost = await query("SELECT * FROM lost_items WHERE status = 'Approved'");
+    const userFound = await query("SELECT found_id, user_id, item_name, description, category, found_location, found_date FROM found_items WHERE user_id = ? AND status IN ('Approved', 'Pending')", [userId]);
+    const approvedLost = await query("SELECT lost_id, user_id, item_name, description, category, lost_location, lost_date FROM lost_items WHERE status = 'Approved'");
 
     for (const found of userFound) {
       for (const lost of approvedLost) {
@@ -753,7 +806,7 @@ app.get(['/my-matches.php', '/my-matches'], requireUser, async (req, res) => {
         l.contact_information AS lost_contact_information,
         l.secret_information AS lost_secret_information,
         l.secret_information,
-        l.item_image AS lost_item_image,
+        (CASE WHEN LENGTH(l.item_image) > 255 THEN 'data:image' ELSE l.item_image END) AS lost_item_image,
         l.user_id AS lost_user_id,
 
         f.item_name AS found_item_name,
@@ -763,8 +816,8 @@ app.get(['/my-matches.php', '/my-matches'], requireUser, async (req, res) => {
         f.found_location,
         f.found_date,
         f.finder_contact_information,
-        f.item_image AS found_item_image,
-        f.item_image AS found_image,
+        (CASE WHEN LENGTH(f.item_image) > 255 THEN 'data:image' ELSE f.item_image END) AS found_item_image,
+        (CASE WHEN LENGTH(f.item_image) > 255 THEN 'data:image' ELSE f.item_image END) AS found_image,
         f.user_id AS found_user_id,
 
         u_lost.full_name AS lost_user_name,
@@ -1680,7 +1733,9 @@ app.get(['/view-lost-items.php', '/view-lost-items'], requireAdmin, async (req, 
     }
 
     const items = await query(`
-      SELECT l.*, u.full_name
+      SELECT l.lost_id, l.user_id, l.item_name, l.category, l.description, l.secret_information, l.lost_date, l.lost_location, l.status,
+             (CASE WHEN LENGTH(l.item_image) > 255 THEN 'data:image' ELSE l.item_image END) AS item_image,
+             u.full_name
       FROM lost_items l
       LEFT JOIN users u ON l.user_id = u.user_id
       ORDER BY l.lost_id DESC

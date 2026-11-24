@@ -5,10 +5,14 @@ function renderPendingPostsDetail({ item, type, csrfToken, admin_username = 'Adm
   const isLost = type === 'lost';
   const pageTitle = isLost ? 'Pending Lost Item Details' : 'Pending Found Item Details';
   const id = isLost ? item.lost_id : item.found_id;
-  const imageHtml = (isLost && item.item_image)
+  const imgSrc = (item.item_image && item.item_image.startsWith('data:'))
+    ? `image.php?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`
+    : (item.item_image ? escapeHtml(item.item_image) : '');
+
+  const imageHtml = imgSrc
     ? `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Picture</span>
-         <img src="${escapeHtml(item.item_image)}" class="max-w-xs rounded-xl shadow-xs border border-slate-200">
+         <img src="${imgSrc}" class="max-w-xs rounded-xl shadow-xs border border-slate-200">
        </div>`
     : '';
 

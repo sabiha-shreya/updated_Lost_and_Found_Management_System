@@ -115,7 +115,7 @@ function renderLostItemsList({ items = [], admin_username = 'Admin' }) {
       <td class="py-3.5 px-4 font-bold text-slate-900 text-xs">#${escapeHtml(row.lost_id)}</td>
       <td class="py-3.5 px-4">
         ${row.item_image
-          ? `<img src="${escapeHtml(row.item_image)}" alt="Lost Item" class="w-10 h-10 object-cover rounded-lg border border-slate-200">`
+          ? `<img src="${row.item_image.startsWith('data:') ? `image.php?type=lost&id=${encodeURIComponent(row.lost_id)}` : escapeHtml(row.item_image)}" alt="Lost Item" class="w-10 h-10 object-cover rounded-lg border border-slate-200">`
           : '<span class="text-xs text-slate-400 italic">No Image</span>'}
       </td>
       <td class="py-3.5 px-4 font-bold text-slate-900 text-sm">${escapeHtml(row.item_name)}</td>

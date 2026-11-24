@@ -46,7 +46,7 @@ function renderDashboard({ full_name, unread_count, lost_items, found_items, rec
     <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 transition">
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
-          ${item.item_image ? `<img src="${escapeHtml(item.item_image)}" alt="${escapeHtml(item.item_name)}" class="w-full h-full object-cover rounded-xl">` : getItemGraphic(item.item_name)}
+          ${item.item_image ? `<img src="${item.item_image.startsWith('data:') ? `image.php?type=lost&id=${encodeURIComponent(item.lost_id)}` : escapeHtml(item.item_image)}" alt="${escapeHtml(item.item_name)}" class="w-full h-full object-cover rounded-xl">` : getItemGraphic(item.item_name)}
         </div>
         <div class="truncate">
           <h4 class="text-xs font-bold text-slate-800 truncate">${escapeHtml(item.item_name)}</h4>
@@ -67,7 +67,7 @@ function renderDashboard({ full_name, unread_count, lost_items, found_items, rec
       <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 transition">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
-            ${item.item_image ? `<img src="${escapeHtml(item.item_image)}" alt="${escapeHtml(item.item_name)}" class="w-full h-full object-cover rounded-xl">` : getItemGraphic(item.item_name)}
+            ${item.item_image ? `<img src="${item.item_image.startsWith('data:') ? `image.php?type=${encodeURIComponent(item.item_type)}&id=${encodeURIComponent(item.id)}` : escapeHtml(item.item_image)}" alt="${escapeHtml(item.item_name)}" class="w-full h-full object-cover rounded-xl">` : getItemGraphic(item.item_name)}
           </div>
           <div class="truncate">
             <div class="flex items-center gap-1.5">
@@ -92,7 +92,7 @@ function renderDashboard({ full_name, unread_count, lost_items, found_items, rec
     <div class="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-50 transition">
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
-          ${item.item_image ? `<img src="${escapeHtml(item.item_image)}" alt="${escapeHtml(item.item_name)}" class="w-full h-full object-cover rounded-xl">` : getItemGraphic(item.item_name)}
+          ${item.item_image ? `<img src="${item.item_image.startsWith('data:') ? `image.php?type=found&id=${encodeURIComponent(item.found_id)}` : escapeHtml(item.item_image)}" alt="${escapeHtml(item.item_name)}" class="w-full h-full object-cover rounded-xl">` : getItemGraphic(item.item_name)}
         </div>
         <div class="truncate">
           <h4 class="text-xs font-bold text-slate-800 truncate">${escapeHtml(item.item_name)}</h4>

@@ -7,8 +7,11 @@ function renderViewItems({ type = 'all', lost_items = [], found_items = [], full
   const lostRows = (lost_items && lost_items.length > 0)
     ? lost_items.map(row => {
         const id = encodeURIComponent(row.lost_id);
-        const img = row.item_image
-          ? `<img src="${escapeHtml(row.item_image)}" class="w-12 h-12 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition" onclick="event.stopPropagation(); showImage(this.src);" alt="Item">`
+        const imgSrc = row.item_image
+          ? (row.item_image.startsWith('data:') ? `image.php?type=lost&id=${id}` : escapeHtml(row.item_image))
+          : null;
+        const img = imgSrc
+          ? `<img src="${imgSrc}" class="w-12 h-12 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition" onclick="event.stopPropagation(); showImage(this.src);" alt="Item">`
           : '<span class="text-xs text-slate-400 italic">No image</span>';
 
         return `
@@ -49,8 +52,11 @@ function renderViewItems({ type = 'all', lost_items = [], found_items = [], full
   const foundRows = (found_items && found_items.length > 0)
     ? found_items.map(row => {
         const id = encodeURIComponent(row.found_id);
-        const img = row.item_image
-          ? `<img src="${escapeHtml(row.item_image)}" class="w-12 h-12 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition" onclick="event.stopPropagation(); showImage(this.src);" alt="Item">`
+        const imgSrc = row.item_image
+          ? (row.item_image.startsWith('data:') ? `image.php?type=found&id=${id}` : escapeHtml(row.item_image))
+          : null;
+        const img = imgSrc
+          ? `<img src="${imgSrc}" class="w-12 h-12 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition" onclick="event.stopPropagation(); showImage(this.src);" alt="Item">`
           : '<span class="text-xs text-slate-400 italic">No image</span>';
 
         return `
